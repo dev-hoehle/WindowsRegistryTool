@@ -4,11 +4,22 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.Win32;
 using System.Windows.Forms;
+using System.Runtime.InteropServices;
 
 namespace RegistryTool
 {
     public partial class Main : Form
     {
+        //makes form moveable
+        [DllImport("user32.DLL", EntryPoint = "ReleaseCapture")]
+        private extern static void ReleaseCapture();
+        [DllImport("user32.DLL", EntryPoint = "SendMessage")]
+        private extern static void SendMessage(System.IntPtr hWnd, int wMsg, int wParam, int lParam);
+        private void Main_MouseDown(object sender, MouseEventArgs e)
+        {
+            ReleaseCapture();
+            SendMessage(this.Handle, 0x112, 0xf012, 0);
+        }
 
         public Main()
         {
@@ -19,10 +30,9 @@ namespace RegistryTool
         {
             Environment.Exit(0);
         }
-
-        private void Login_Load(object sender, EventArgs e)
+        private void Main_Load(object sender, EventArgs e)
         {
-
+            label12.Text = "The current registered Windows Owner is: " + regget_local(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", @"RegisteredOwner");
         }
 
         public static void reg_local(string path, string valuename, int value)
@@ -30,7 +40,25 @@ namespace RegistryTool
             RegistryKey key = Registry.LocalMachine.OpenSubKey(path, true);
             key.SetValue(valuename, value, RegistryValueKind.DWord);
             key.Close();
+
+
         }
+        public static string regget_local(string path, string valuename)
+        {
+            RegistryKey key = Registry.LocalMachine.OpenSubKey(path, true);
+            Object value = key.GetValue(valuename);
+            key.Close();
+            return value as string;
+
+        }
+
+        public static void reg_localstring(string path, string valuename, string value)
+        {
+            RegistryKey key = Registry.LocalMachine.OpenSubKey(path, true);
+            key.SetValue(valuename, value, RegistryValueKind.String);
+            key.Close();
+        }
+
         public static void reg_currentuser(string path, string valuename, int value)
         {
             RegistryKey key = Registry.CurrentUser.OpenSubKey(path, true);
@@ -164,6 +192,58 @@ namespace RegistryTool
                 MessageBox.Show("The bing search resluts are now enabled again.", "RegistryTool", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             key.Close();
+        }
+
+        private void siticoneRoundedButton14_Click(object sender, EventArgs e)
+        {
+            reg_local(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "UseOLEDTaskbarTransparency", 1);
+            MessageBox.Show("OLED Taskbar Transparency is now enabled.", "RegistryTool", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void siticoneRoundedButton15_Click(object sender, EventArgs e)
+        {
+            reg_local(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced", "UseOLEDTaskbarTransparency", 0);
+            MessageBox.Show("OLED Taskbar Transparency is now disabled.", "RegistryTool", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void siticoneRoundedButton17_Click(object sender, EventArgs e)
+        {
+            reg_currentuser(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", "ConfirmFileDelete", 0);
+            MessageBox.Show("Confirm File Delete Dialog is now disabled.", "RegistryTool", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void siticoneRoundedButton16_Click(object sender, EventArgs e)
+        {
+            reg_currentuser(@"SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer", "ConfirmFileDelete", 1);
+            MessageBox.Show("Confirm File Delete Dialog is now enabled.", "RegistryTool", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void siticoneRoundedButton18_Click(object sender, EventArgs e)
+        {
+            string name = reginput.Text;
+            reg_localstring(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", "RegisteredOwner", name);
+            label12.Text = "The current registered Windows Owner is: " + regget_local(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", @"RegisteredOwner");
+            MessageBox.Show("The Registered owner has been changed.", "RegistryTool", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void siticoneRoundedButton19_Click(object sender, EventArgs e)
+        {
+            reg_currentuser(@"Control Panel\Desktop", "PaintDesktopVersion", 1);
+            DialogResult dialogResult = MessageBox.Show("Paint Desktop Version is now enabled. Your pc must be restarted for " + Environment.NewLine + "the changes to take effect. " + Environment.NewLine + "Do you want to restart now?", "RegistryTool", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                Process.Start("ShutDown", "/r");
+            }
+        }
+
+        private void siticoneRoundedButton20_Click(object sender, EventArgs e)
+        {
+            reg_currentuser(@"Control Panel\Desktop", "PaintDesktopVersion", 0);
+            DialogResult dialogResult = MessageBox.Show("Paint Desktop Version is now disabled. Your pc must be restarted for " + Environment.NewLine + "the changes to take effect. " + Environment.NewLine + "Do you want to restart now?", "RegistryTool", MessageBoxButtons.YesNo);
+            if (dialogResult == DialogResult.Yes)
+            {
+                Process.Start("ShutDown", "/r");
+            }
         }
     }
 
